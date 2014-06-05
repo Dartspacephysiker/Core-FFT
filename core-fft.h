@@ -80,7 +80,6 @@ struct core_param {
 
         bool verbose;
         unsigned int threads;
-        bool complex;
         bool convert;
         bool continuous;
         bool phases;
@@ -97,20 +96,7 @@ struct core_return {
 	int max[CORE_MAXCHAN];
 };
 
-struct core_inputs {
-	unsigned char *samp_char;
-	unsigned short int *samp_short;
-	float *samp_float;
-	double *samp_double;
-
-	double *in_real;
-	fftw_complex *in_complex;
-
-	unsigned int bps;
-	unsigned long int n_samp;
-};
-
-static bool running;
+volatile bool running;
 
 extern void do_depart(int signum);
 extern void window_sel(double *, struct core_param *);
@@ -119,5 +105,6 @@ extern double apply_polynomial(const polynomial_t *, double);
 extern int complex_1chan(struct core_param, struct core_return *);
 extern int uint16_1chan(struct core_param, struct core_return *);
 extern int float4_1chan(struct core_param, struct core_return *);
+extern int float8_1chan(struct core_param, struct core_return *);
 extern int real_nchan(struct core_param, struct core_return *);
 extern int uint8_1chan(struct core_param, struct core_return *);

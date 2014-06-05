@@ -8,6 +8,7 @@ extern struct core_return;
 extern int complex_1chan(struct core_param, struct core_return *);
 extern int uint16_1chan(struct core_param, struct core_return *);
 extern int float4_1chan(struct core_param, struct core_return *);
+extern int float8_1chan(struct core_param, struct core_return *);
 extern int real_nchan(struct core_param, struct core_return *);
 extern int uint8_1chan(struct core_param, struct core_return *);
 

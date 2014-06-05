@@ -158,6 +158,8 @@ int float4_1chan(struct core_param o, struct core_return *retstr) {
 		for (i = 0; i < o.N; i++) {
 			dataz = (double) samples[i];
 
+            if (!isfinite(dataz)) dataz = 0;
+
 			if (o.convert) {
 				dataz = apply_polynomial(&o.poly[0], dataz);
 			}

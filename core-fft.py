@@ -110,10 +110,10 @@ print o.outfile
 # read in clo
 
 # read in header
-if o.header == 1:
-    head = ggseHeader.ff(o.infile,mode='head')
-elif o.header == 4:
-    head = ggseHeader.ff(o.infile,mode='tail')
+#if o.header == 1:
+#    head = ggseHeader.ff(o.infile,mode='head')
+#elif o.header == 4:
+#    head = ggseHeader.ff(o.infile,mode='tail')
 
 # fill option struct
 options = coreFFT.core_param()
@@ -121,28 +121,28 @@ options = coreFFT.core_param()
 options.infile = o.infile
 options.outfile = o.outfile
 options.timefile = o.timefile
-options.N = o.N if bool(o.N) else head.getint('ggse_header','chipsize')
+options.N = o.N #if bool(o.N) else head.getint('ggse_header','chipsize')
 options.overlap = o.overlap
 options.windiv = o.windiv
 options.bl_last = o.bl_last
 options.bl_first = o.bl_first
 options.skip_avg = o.skip_avg
 options.skip_fft = o.skip_fft
-options.avg = o.avg if o.avg > 0 else head.getint('ggse_header','chipblock')
-options.n_chan = o.nchan if bool(o.nchan) else head.getint('ggse_header','n_chan')
+options.avg = o.avg if o.avg > 0 else 1 #head.getint('ggse_header','chipblock')
+options.n_chan = o.nchan #if bool(o.nchan) else head.getint('ggse_header','n_chan')
 options.n_ffts = o.X
 options.agc_bin = o.agc_bin
 options.agc_level = o.agc_lvl
 
 if o.freq > 0:
     options.frequency = o.freq
-elif o.header:
-    head.getfloat('ggse_header','frequency')
+#elif o.header:
+#    head.getfloat('ggse_header','frequency')
     
 if o.time_start != 0:
     options.time_start = o.time_start
-elif o.header:
-    options.time_start = head.getint('ggse_header','time')
+#elif o.header:
+#    options.time_start = head.getint('ggse_header','time')
 else:
     options.time_start = 0
      
@@ -176,6 +176,9 @@ if o.nchan == 1:
     elif o.float == 4:
         print "float4, 1-Channel"
         ret = coreFFT.float4_1chan(options,retstr)
+    elif o.float == 8:
+        print "float8, 1-Channel"
+        ret = coreFFT.float8_1chan(options,retstr)
     else:
         print "Real, 1-Channel"
         ret = coreFFT.uint16_1chan(options,retstr)

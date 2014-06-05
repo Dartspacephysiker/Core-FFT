@@ -15,7 +15,7 @@ else
 endif
 
 SWIGDEF = core-fft.i
-SOURCES = complex-1chan.c float4-1chan.c uint16-1chan.c real-nchan.c uint8-1chan.c core-fft.c
+SOURCES = complex-1chan.c float4-1chan.c float8-1chan.c uint16-1chan.c real-nchan.c uint8-1chan.c core-fft.c
 WRAPPER = core-fft_wrap.c
 OBJECTS = $(SOURCES:.c=.o) $(WRAPPER:.c=.o)
 EXEC = _coreFFT.so
