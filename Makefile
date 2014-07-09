@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -std=gnu99 -pipe -O2 -pthread -Wall -fPIC -D_FILE_OFFSET_BITS=64
-INCLUDE = -I/usr/include/python2.6 -I/opt/local/include
+INCLUDE = -I/usr/include/python2.7 -I/opt/local/include
 
-LIBS = -L/usr/lib/python2.6 -L/opt/local/lib
+LIBS = -L/usr/lib/python2.7 -L/opt/local/lib
 LDLIBS = -lpthread -lfftw3_threads -lfftw3 -lm -pipe
 OSXLD = -bundle -flat_namespace -undefined suppress # OS X Linker Flags
 POSLD = -shared # POSIX Linker Flags
