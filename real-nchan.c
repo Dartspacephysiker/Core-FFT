@@ -274,7 +274,10 @@ int real_nchan(struct core_param o, struct core_return *retstr) {
 	for (i = 0; i < o.n_chan; i++) {
 		fclose(ostream[i]);
 	}
-	fclose(phstream);
+
+	if( o.phases ) {
+	  fclose(phstream);
+	}
 
 	retstr->time_total = time-o.time_start;
 	retstr->nfft = ffts;
