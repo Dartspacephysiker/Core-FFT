@@ -23,6 +23,17 @@ void window_sel(double *window, struct core_param *o) {
 	double wvar, winpar = o->winpar;
 	unsigned int N = o->N, i;
 
+		if (Streq(o->window,"gaussian")) {
+		        printf("Using Gaussian window...");
+		} else if (Streq(o->window,"bohman")) {
+		        printf("Using Bohman window...");
+		} else if (Streq(o->window,"bartlett-hanning")) {
+		        printf("Using Bartlett-Hanning window...");
+		} else if (Streq(o->window,"hamming")) {
+		        printf("Using Hamming window...");
+		} else { 
+		        printf("Using Hanning window...");
+		}
 	for (i = 0; i < N; i++) {
 		if (Streq(o->window,"gaussian")) {
 			window[i] = exp( -0.5 * pow(i-(N-1)/2.0,2) / pow(winpar*N,2) );
