@@ -1,6 +1,7 @@
 CC = gcc
-CFLAGS = -std=gnu99 -pipe -O2 -pthread -Wall -fPIC -D_FILE_OFFSET_BITS=64
-INCLUDE = -I/usr/include/python2.7 -I/opt/local/include -I/SPENCEdata2/software/Enthought/Canopy/appdata/canopy-1.4.0.1938.rh5-x86_64/include/python2.7/
+#CFLAGS = -std=gnu99 -pipe -O2 -pthread -Wall -fPIC -D_FILE_OFFSET_BITS=64
+CFLAGS = -std=gnu99 -pipe -ggdb -pthread -Wall -fPIC -D_FILE_OFFSET_BITS=64
+INCLUDE = -I/usr/include/python2.7 -I/opt/local/include
 
 LIBS = -L/usr/lib/python2.7 -L/opt/local/lib -L/usr/local/lib
 LDLIBS = -lpthread -lfftw3_threads -lfftw3 -lm -pipe

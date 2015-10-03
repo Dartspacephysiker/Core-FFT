@@ -81,7 +81,7 @@ parser.add_option("-n", "--nchan", dest="nchan", type='int',
                 help="number of channels [1].")
 parser.add_option("-T", "--threads", dest="threads", type='int',
                 help="maximum number of FFTW threads [1].")
-parser.add_option("-p", "--phase", action="store_true", dest="phase", 
+parser.add_option("-p", "--phase", action="store_true", dest="phases", 
                 help="write phases after magnitudes [True].")
 parser.add_option("-F", "--freq", "--frequency", dest="freq", type='float', 
                 help="frequency for timestamps [10MHz].")

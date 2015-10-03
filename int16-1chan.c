@@ -13,8 +13,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
     long int bl_first, bl_last;
 	long int power, maxmag = 0, minmag = 0;
 	off_t dataend, bskip_avg = 0, bskip_fft = 0;
-	//	double cur_mag[o.N], avg_mag[o.N], window[o.N], pow_adj;
-	double cur_mag[o.N], avg_mag[o.N], pow_adj;
+	double cur_mag[o.N], avg_mag[o.N], window[o.N], pow_adj;
 	double dataz;
 //	complex double avg_phs[o.N][N_PHASES];
 //	complex double nphs;
@@ -31,10 +30,10 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	/*
 	 * Complex/Real Input
 	 */
-	unsigned short int *samples;
-	double *input, * window;
+	short int *samples;
+	double *input;
 	fftw_complex *output;
-	bps = sizeof(unsigned short int); // real, unsigned short int (2-byte) data
+	bps = sizeof(short int); // real, short int (2-byte) data
 	s_bytes = bps*o.N;
 	i_bytes = sizeof(double)*o.N;
 	o_bytes = sizeof(fftw_complex)*o.N;
@@ -46,15 +45,11 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	 * Memory allocation.
 	 */
 	printf("Memory allocation...");
-	samples = (unsigned short int *) malloc(s_bytes);
+	samples = (short int *) malloc(s_bytes);
 	if (samples == NULL) fprintf(stderr,"Failed to allocate initial sample memory!\n");
-	//	input = (double *) fftw_malloc(i_bytes);
-	input = (double *) fftw_alloc_real(i_bytes);
+	input = (double *) fftw_malloc(i_bytes);
 	if (input == NULL) fprintf(stderr,"Failed to allocate fft input array!\n");
-	window = (double *) fftw_alloc_real(i_bytes);
-	if (input == NULL) fprintf(stderr,"Failed to allocate fft input array!\n");
-	//	output = (fftw_complex *) fftw_malloc(o_bytes);
-	output = (fftw_complex *) fftw_alloc_complex(o_bytes);
+	output = (fftw_complex *) fftw_malloc(o_bytes);
 	if (output == NULL) fprintf(stderr,"Failed to allocate fft output array!\n");
 	printf("done.  (%liKB)\n",(s_bytes + i_bytes + o_bytes)/1024);
 
