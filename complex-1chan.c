@@ -3,6 +3,7 @@
 #endif
 
 #include "core-fft.h"
+#include "simple_fifo.h"
 //thread stuff?
 
 static inline short int endswp(short int x) {
@@ -32,15 +33,26 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     struct timespec nsl;
     FILE *istream, *ostream, *tstream = NULL;//, *phstream;
 
+    //FIFOness for Dartmouth RxDSP
+    struct simple_fifo *fifo;
+    long int fifo_loc,fifo_size;
+    //  long int skip_loc;
+    //  long int oldskip_loc;
+    /* char *fifo_outbytes; */
+    char fifo_srch[18];
+
+    long int RxDSPAcqSize,RxDSPHeaderSize;
     unsigned int seekRxDSPHeader,endianSwap; //2017/09/06 Added by Spence
-    long int hPosInSamps,backShift,forwardShift,lookingForRxDSPHeaders;
-    short int *hptr;
+
     long int BYTESBEFDARTMOUTH,BYTESINCDARTMOUTH;
+    //OLD WAY 
+    /* long int hPosInSamps,backShift,forwardShift,headerCount; */
+    /* short int *hptr; */
 
     seekRxDSPHeader = 1;
     endianSwap = 1;
     BYTESBEFDARTMOUTH = 132;
-    BYTESINCDARTMOUTH = 56;
+    BYTESINCDARTMOUTH = 44;
     static char head_strings[2][2][33] =
 	{
 	    { // Normal byte order                                                                           
@@ -69,8 +81,6 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     ol_bytes = o.overlap*bps; // bytes overlapped
     ol_shift = s_bytes-ol_bytes; // bytes kept for overlap
 
-    //printf("bps: %lu\n",bps);
-
     /*
      * Memory allocation.
      */
@@ -82,6 +92,23 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     if (input == NULL) fprintf(stderr,"Failed to allocate fft input array!\n");
     output = (fftw_complex *) fftw_malloc(o_bytes);
     if (output == NULL) fprintf(stderr,"Failed to allocate fft output array!\n");
+
+    //fifo setup
+    fifo = malloc( sizeof(*fifo) );
+    if (fifo == NULL) fprintf(stderr,"Failed to allocate fifo!\n");
+    /* fifo_size = 4*s_bytes; */
+    RxDSPAcqSize = 131200;
+    RxDSPHeaderSize = BYTESBEFDARTMOUTH + BYTESINCDARTMOUTH;
+    fifo_size = 4*RxDSPAcqSize;
+    fifo_init(fifo, fifo_size);  
+
+    if (s_bytes > RxDSPAcqSize) {
+	printf("Too big!\n");
+	return -1;
+    }
+    /* fifo_outbytes = malloc(rtdbytes); */
+    //in place of fifo_outbytes, we use "samples"
+    strcpy(fifo_srch, head_strings[endianSwap][0]);
 
     if (o.overlap > 0) {
 	N_read = o.overlap;
@@ -138,7 +165,8 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     printf("fiddling...");
 
     fseeko(istream,0,SEEK_END);
-    dataend = ftello(istream)-s_bytes;
+    /* dataend = ftello(istream)-s_bytes; */
+    dataend = ftello(istream)-(4*RxDSPAcqSize);
     rewind(istream);
 
     if (o.n_startsample > 0) {
@@ -176,7 +204,7 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 
     running = true;
 
-    while ((ftello(istream) < dataend) && (running == true)) {
+    while ((ftello(istream) <= dataend) && (running == true)) {
 	nanosleep(&nsl,NULL);
 	/*
 	 * Main loop: read in data while data is still readable.
@@ -190,191 +218,284 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 	    }
 	} else {
 
-	    ret = fread(samples,bps,o.N,istream);
-	    if (ret != o.N) {
-		printf("Failed to read from data file.\n");
+	    /* printf("Available: %d\n",(fifo_size-fifo_avail(fifo))/1024/1024);	     */
+	    /* if ( fifo_avail(fifo) < 2*RxDSPAcqSize ){ */
+	    if ( fifo_avail(fifo) < RxDSPAcqSize ){
+		seekRxDSPHeader = 1;
+
+		/* fifo_writefromstream(fifo,istream,fifo_size-fifo_avail(fifo));		 */
+		/* fifo_writefromstream(fifo,istream,fifo_size-fifo_avail(fifo));		 */
+		fifo_flush(fifo);
+		fifo_writefromstream(fifo,istream,RxDSPAcqSize);		
+
 	    }
+
+	    while (seekRxDSPHeader) {
+
+		//try to kill headers right away
+		fifo_loc = fifo_search(fifo, 2*RxDSPAcqSize, fifo_srch, 18);
+
+		/* if ( (fifo_loc != -1) && (fifo_headpos_rel_to_fifo_base(fifo) < (fifo_loc-BYTESBEFDARTMOUTH)) ) { */
+		if (fifo_loc != -1) {
+		    
+		    //print skips array		
+		    /* printf("[%0.5d SAMPLES ARRAY]\n",ffts); */
+		    /* printf("[%0.5d BEFORE       ]\n",ffts); */
+		    /* printf("%0.4d      %0.4X, ",0,(long int) (*(fifo->head))); */
+		    /* /\* printf("%0.4X, ",); *\/ */
+		    /* for (i = 1; i < RxDSPHeaderSize/2; i++) { */
+		    /* 	if (i*2 % 16 == 0) { */
+		    /* 	    printf("\n%0.4d      %0.4X, ",i,(unsigned int) *((char *) ((long int)fifo->head+i*2))); */
+		    /* 	} else { */
+		    /* 	    printf("%0.4X, ",(unsigned int) *((char *)((long int)fifo->head+i*2))); */
+		    /* 	} */
+		    /* 	if (i*2 == (RxDSPHeaderSize - 2)) printf("\n"); */
+		    /* } */
+
+
+
+		    /* fifo_skip(fifo,fifo_srch,18,0,RxDSPHeaderSize,fifo_avail(fifo),(-1)*BYTESBEFDARTMOUTH); */
+
+		    //try killing instead of skip
+		    fifo_kill(fifo, fifo_loc);
+		    break;
+		} else break;
+
+	    }
+
+	    //OLD WAY
+	    /* ret = fread(samples,bps,o.N,istream); */
+	    /* if (ret != o.N) { */
+	    /* 	printf("Failed to read from data file.\n"); */
+	    /* } */
 
 	    // Added by Spence 2017/09/06
-	    if (seekRxDSPHeader) {
-		//Get current position
-		// curPos = ftell(istream);
+		////OLD WAY
+	    /* if (seekRxDSPHeader) { */
 
-		//Now look for "Da" 
-		//endian swap: 1
-		//endian reg: 0
-		/* printf("%.*s\n",2,head_strings[1][0]); */
-		/* printf("%.*s\n",o.N,samples); */
-		/* printf("%li\n",strlen("\x44 \x61")); */
-		hptr = memmem(samples,o.N,head_strings[endianSwap][0],2);
-		/* hptr = memmem(samples,o.N,"\x44 \x61",2); */
+		//hptr = memmem(samples,o.N,fifo_srch,2);
+		//
+		////If there is no sign of Dartmouth College, keep it moving
+		//if (hptr != NULL) {
+		//
+		//    //Got "Da"! Do we need to read in more data?
+		//    hPosInSamps = (long int) (hptr-samples);
+		//
+		//    if ( ( hPosInSamps ) >= ( o.N - 34 ) ) {
+		//
+		//	printf("Better 'djust dat!\n");
+		//
+		//    }
+		//
+		//    headerCount = 0;
+		//    while (true) {
+		//    
+		//	//Now a full test
+		//	/* hptr = memmem((short int *) (((long int) samples) + hPosInSamps),o.N,fifo_srch,18 * sizeof(*fifo_srch)); */
+		//	/* if ( headerCount > 0) printf("Check %li\n",headerCount+1); */
+		//	hptr = memmem(samples,o.N,fifo_srch,18 * sizeof(*fifo_srch));
+		//
+		//	//print sample array
+		//	//
+		//	/* if ((ffts == 0) || (ffts == (o.n_ffts - 1))) { */
+		//
+		//	if (hptr != NULL) {
+		//
+		//	    if ( (headerCount == 0) && (ffts < 1000))  {
+		//		printf("[%0.5d SAMPLES ARRAY]\n",ffts);
+		//		printf("[%0.5d BEFORE       ]\n",ffts);
+		//		printf("%0.4d      %0.8X, ",0,samples[0]);
+		//		/* printf("%0.4X, ",); */
+		//		for (i = 1; i < o.N; i++) {
+		//		    if (i % 8 == 0) {
+		//			printf("\n%0.4d      %0.8X, ",i,samples[i]);
+		//		    } else {
+		//			printf("%.8X, ",samples[i]);
+		//		    }
+		//		    if (i == (o.N - 1)) printf("\n");
+		//		}
+		//	    }
+		//
+		//	    hPosInSamps = (long int) (hptr-samples);
+		//	    /* printf("(%0.2li) Found it at %li!\n",ffts,hPosInSamps); */
+		//    
+		//	    if ( ( hPosInSamps + BYTESINCDARTMOUTH ) > o.N ) {
+		//		//In this case some of the header will be in the next read
+		//		printf("Whoa!\n");
+		//	    } else {
+		//		//In this case we need to move the data back BYTESINCDARTMOUTH bytes, then read in as many additional bytes as necessary
+		//		/* printf("Header: %.*s\n",BYTESINCDARTMOUTH,(char *) hptr); */
+		//		memmove(hptr,(short int *) ( ((long int) hptr) + BYTESINCDARTMOUTH),o.N-(hPosInSamps+BYTESINCDARTMOUTH));
+		//		ret = fread((short int *) ( ((long int) samples) + o.N - BYTESINCDARTMOUTH),bps,BYTESINCDARTMOUTH,istream);
+		//
+		//		if (ret != BYTESINCDARTMOUTH) {
+		//		    printf("Failed to read from data file.\n");
+		//		}
+		//	    }
+		//	
+		//	    /* forwardShift = ( BYTESINCDARTMOUTH < ( o.N - hPosInSamps ) ) ? BYTESINCDARTMOUTH : ( o.N - hPosInSamps ); */
+		//
+		//
+		//	    //Any need to backshift over garbage data?
+		//	    /* if ( ( hPosInSamps ) > 0 ) { */
+		//	
+		//	    /* 	backShift = ( BYTESBEFDARTMOUTH < hPosInSamps ) ? BYTESBEFDARTMOUTH : hPosInSamps; */
+		//
+		//	    /* 	/\* printf("Backshift: %li\n",backShift); *\/ */
+		//
+		//	    /* 	/\* memmove(samples,hptr,o.N-hPosInSamps); *\/ */
+		//	    /* 	memmove((short int *) (((long int) hptr) - backShift),hptr,o.N-hPosInSamps); */
+		//	
+		//	    /* 	//Read in some more to account for shifting backwards, which erased junk data */
+		//	    /* 	ret = fread((short int *) ( ((long int) samples) + (o.N - backShift)),bps,backShift,istream); */
+		//
+		//	    /* 	if (ret != backShift) { */
+		//	    /* 	    printf("Failed to read from data file.\n"); */
+		//	    /* 	} */
+		//
+		//	    /* 	hPosInSamps -= backShift; */
+		//
+		//	    /* } */
+		//
+		//	    /* printf("Headercount: %li\n",headerCount); */
+		//	    
+		//	    if ( (headerCount == 0) && (ffts < 1000))  {
+		//		/* if (headerCount == 0) { */
+		//		printf("[%0.5d SAMPLES ARRAY]\n",ffts);
+		//		printf("[%0.5d AFTER        ]\n",ffts);
+		//		printf("%0.4d      %0.8X, ",0,samples[0]);
+		//		/* printf("%0.4X, ",); */
+		//		for (i = 1; i < o.N; i++) {
+		//		    if (i % 8 == 0) {
+		//			printf("\n%0.4d      %0.8X, ",i,samples[i]);
+		//		    } else {
+		//			printf("%.8X, ",samples[i]);
+		//		    }
+		//		    if (i == (o.N - 1)) printf("\n");
+		//		}
+		//	    }
+		//
+		//	    headerCount++;
+		//
+		//	} else {
+		//	    break;
+		//	}
+		//    }
+		//}
 
-		//If there is no sign of Dartmouth College, keep it moving
-		if (hptr != NULL) {
+		
 
-		    //Got "Da"! Do we need to read in more data?
-		    hPosInSamps = (long int) (hptr-samples);
+		/* if( fifo_avail(fifo) > 2*s_bytes ) { */
+		    //The lines below kill everything 
+		    /* fifo_loc = fifo_search(fifo, 2*s_bytes, fifo_srch, 18); */
+		    /* fifo_kill(fifo, fifo_loc); */
+		/* } */
+	    /* } */
 
-		    if ( ( hPosInSamps ) >= ( o.N - 34 ) ) {
-
-			printf("Better 'djust dat!\n");
-
-		    }
-
-		    lookingForRxDSPHeaders = 0;
-		    while (true) {
-		    
-			//Now a full test
-			hptr = memmem((short int *) (((long int) samples) + hPosInSamps),o.N,head_strings[endianSwap][0],18 * sizeof(*head_strings[endianSwap][0]));
-			if (hptr != NULL) {
-
-			    /* printf("(%0.2li) Found it at %li!\n",ffts,hPosInSamps); */
-		    
-			    if ( ( hPosInSamps + BYTESINCDARTMOUTH ) > o.N ) {
-				//In this case some of the header will be in the next read
-				printf("Whoa!\n");
-			    } else {
-				//In this case we need to move the data back BYTESINCDARTMOUTH bytes, then read in as many additional bytes as necessary
-				/* printf("Header: %.*s\n",BYTESINCDARTMOUTH,(char *) hptr); */
-				memmove(hptr,(short int *) ( ((long int) hptr) + BYTESINCDARTMOUTH),o.N-(hPosInSamps+BYTESINCDARTMOUTH));
-				ret = fread((short int *) ( ((long int) samples) + o.N - BYTESINCDARTMOUTH),bps,BYTESINCDARTMOUTH,istream);
-
-				if (ret != BYTESINCDARTMOUTH) {
-				    printf("Failed to read from data file.\n");
-				}
-			    }
-			
-			    /* forwardShift = ( BYTESINCDARTMOUTH < ( o.N - hPosInSamps ) ) ? BYTESINCDARTMOUTH : ( o.N - hPosInSamps ); */
-
-
-			    //Any need to backshift over garbage data?
-			    if ( ( hPosInSamps ) > 0 ) {
-			
-				backShift = ( BYTESBEFDARTMOUTH < hPosInSamps ) ? BYTESBEFDARTMOUTH : hPosInSamps;
-
-				/* printf("Backshift: %li\n",backShift); */
-
-				/* memmove(samples,hptr,o.N-hPosInSamps); */
-				memmove((short int *) (((long int) hptr) - backShift),hptr,o.N-hPosInSamps);
-			
-				//Read in some more to account for shifting backwards, which erased junk data
-				ret = fread((short int *) ( ((long int) samples) + (o.N - backShift)),bps,backShift,istream);
-
-				if (ret != backShift) {
-				    printf("Failed to read from data file.\n");
-				}
-
-				hPosInSamps -= backShift;
-
-			    }
-
-			    lookingForRxDSPHeaders++;
-			    printf("Headercount: %li\n",lookingForRxDSPHeaders);
-			    
-			} else {
-			    break;
-			}
-		    }
-		}
-	    }
+	    /* fifo_read((char *) samples, fifo, s_bytes); */
 
 	}
 
-	/*
-	 * Cast into fftw_complex input array, windowing too.
-	 */
-	//	if (tcd>>15 == 1) tcd -= 32768;
-	//	if (tcd>>15 == 1) tcd -= 32768;
-	for (i = 0; i < o.N; i++) {
-	    if (endianSwap) {
-		input[i] =  ((double) endswp(samples[2*i]));
-		input[i] += ((double) endswp(samples[2*i+1]))*I;
-	    }
-	    else {
-		input[i] =  ((double) samples[2*i]);
-		input[i] += ((double) samples[2*i+1])*I;
-	    }
-	    /* input[i]  = ((double) samples[2*i]  ); */
-	    /* input[i] += ((double) samples[2*i+1])*I; */
-	    input[i] *= window[i];
-	}
-
-	fftw_execute(fftplan); // FOR GLORY!!!
-
-	/*
-	 * Get the squared magnitude, adjust powers
-	 */
-	for (i = 0; i < nyq; i++) {
-	    iphs = 0;
+	
+	//THESE TWO LINES ARE NEW
+	while (fifo_avail(fifo) >= s_bytes) {
+	    fifo_read((char *) samples, fifo, s_bytes);
 
 	    /*
-	     * Need the second half of output[] first,
-	     * then first half second, because that's
-	     * how DFTs output their frequencies.
+	     * Cast into fftw_complex input array, windowing too.
 	     */
-	    if (i < half) {
-		datai = output[i+half];
-	    } else {
-		datai = output[i-half];
+	    //	if (tcd>>15 == 1) tcd -= 32768;
+	    //	if (tcd>>15 == 1) tcd -= 32768;
+	    for (i = 0; i < o.N; i++) {
+		if (endianSwap) {
+		    input[i] =  ((double) endswp(samples[2*i]));
+		    input[i] += ((double) endswp(samples[2*i+1]))*I;
+		}
+		else {
+		    input[i] =  ((double) samples[2*i]);
+		    input[i] += ((double) samples[2*i+1])*I;
+		}
+		/* input[i]  = ((double) samples[2*i]  ); */
+		/* input[i] += ((double) samples[2*i+1])*I; */
+		input[i] *= window[i];
 	    }
 
-	    if (iavg == 0) avg_mag[i] = 0; // First average, so initialize
-	    avg_mag[i] += pow(cabs(datai),2);
+	    fftw_execute(fftplan); // FOR GLORY!!!
 
-	    /*			if (o.phases) {
-				for (k = j+1; k < o.n_chan; k++) {
-				if (iavg == 0) avg_phs[i][j][iphs] = 0;
-				avg_phs[i][j][iphs] += datai[i][j]*conj(datai[i][k]);
-				iphs++;
-				}
-				}*/
-	}
-
-	//		printf("Average #%i\n",iavg+1);
-
-	iavg++;
-	if (iavg == o.avg) {
 	    /*
-	     * We've averaged enough, output to files.
+	     * Get the squared magnitude, adjust powers
 	     */
-	    if (tstream != NULL) {
-		fscanf(tstream,"%lf\n",&time);
-	    }
-
-	    if (o.verbose) printf("%f\n",time);
-
-	    fprintf(ostream,"%8.8f\n",time);  // Timestamps
-
-	    /*			if (o.phases) {
-				fprintf(phstream,"%.8f\n",time);
-				}
-	    */
-	    for (i = bl_first-1; i < bl_last; i++) {
-		if (o.linear == true) {
-		    return(1);  //not working
-		    power = avg_mag[i]/o.avg;
-		} else {
-		    power = lround(10 * log10(avg_mag[i]/o.avg));	// log10(|x|^2)
-		}
-
-		//power &= 65535; // Trim to 16 bits.
-		if (!o.binary) {
-		    fprintf(ostream,"%li\n", power);
-		} else {
-		    // Blerg
-		}
+	    for (i = 0; i < nyq; i++) {
+		iphs = 0;
 
 		/*
-		 * Find global min & max.
+		 * Need the second half of output[] first,
+		 * then first half second, because that's
+		 * how DFTs output their frequencies.
 		 */
-		if (ffts < o.avg) {
-		    minmag = maxmag = power;
+		if (i < half) {
+		    datai = output[i+half];
 		} else {
-		    minmag = fmin(power,minmag);
-		    maxmag = fmax(power,maxmag);
+		    datai = output[i-half];
 		}
 
-		/*				if (o.phases) {
+		if (iavg == 0) avg_mag[i] = 0; // First average, so initialize
+		avg_mag[i] += pow(cabs(datai),2);
+
+		/*			if (o.phases) {
+					for (k = j+1; k < o.n_chan; k++) {
+					if (iavg == 0) avg_phs[i][j][iphs] = 0;
+					avg_phs[i][j][iphs] += datai[i][j]*conj(datai[i][k]);
+					iphs++;
+					}
+					}*/
+	    }
+
+	    //		printf("Average #%i\n",iavg+1);
+
+	    iavg++;
+	    if (iavg == o.avg) {
+		/*
+		 * We've averaged enough, output to files.
+		 */
+		if (tstream != NULL) {
+		    fscanf(tstream,"%lf\n",&time);
+		}
+
+		if (o.verbose) printf("%f\n",time);
+
+		fprintf(ostream,"%8.8f\n",time);  // Timestamps
+
+		/*			if (o.phases) {
+					fprintf(phstream,"%.8f\n",time);
+					}
+		*/
+		for (i = bl_first-1; i < bl_last; i++) {
+		    if (o.linear == true) {
+			return(1);  //not working
+			power = avg_mag[i]/o.avg;
+		    } else {
+			power = lround(10 * log10(avg_mag[i]/o.avg));	// log10(|x|^2)
+		    }
+
+		    //power &= 65535; // Trim to 16 bits.
+		    if (!o.binary) {
+			fprintf(ostream,"%li\n", power);
+		    } else {
+			// Blerg
+		    }
+
+		    /*
+		     * Find global min & max.
+		     */
+		    if (ffts < o.avg) {
+			minmag = maxmag = power;
+		    } else {
+			minmag = fmin(power,minmag);
+			maxmag = fmax(power,maxmag);
+		    }
+
+		    /*				if (o.phases) {
 						for (k = 0; k < N_PHASES; k++) {
 						nphs = avg_phs[i][j][k]/( \
 						avg_mag[i][n_phsmap[k][0]] * \
@@ -384,30 +505,34 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 						}
 						fprintf(phstream,"\n");
 						}*/
+		}
+
+		/* Add time per avg. */
+		if (o.time_avg > 0) {
+		    time += o.time_avg;
+		}
+
+		iavg = 0;
+
+	    }
+	    ffts++;
+
+	    if (ffts == o.n_ffts) break;
+	    if ((o.time_stop != 0) && (time > o.time_stop)) break;
+
+	    /*
+	     * This will add o.time_nffts to the timestamp every o.time_fftmod ffts.
+	     * Interaction with o.time_avg must be carefully considered to get
+	     * the correct timestamp advancement.  Also note that some programs that
+	     * may end up processing this data (e.g. for ps making) do not like it
+	     * when timestamps increase inconsistently.
+	     */
+	    if ((o.time_nfft > 0) && (ffts % o.time_fftmod == 0)) {
+		time += o.time_nfft;
 	    }
 
-	    /* Add time per avg. */
-	    if (o.time_avg > 0) {
-		time += o.time_avg;
-	    }
-
-	    iavg = 0;
 	}
-	ffts++;
 
-	if (ffts == o.n_ffts) break;
-	if ((o.time_stop != 0) && (time > o.time_stop)) break;
-
-	/*
-	 * This will add o.time_nffts to the timestamp every o.time_fftmod ffts.
-	 * Interaction with o.time_avg must be carefully considered to get
-	 * the correct timestamp advancement.  Also note that some programs that
-	 * may end up processing this data (e.g. for ps making) do not like it
-	 * when timestamps increase inconsistently.
-	 */
-	if ((o.time_nfft > 0) && (ffts % o.time_fftmod == 0)) {
-	    time += o.time_nfft;
-	}
     }
 
     fclose(istream);
@@ -415,6 +540,11 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     if (tstream != NULL) {
 	fclose(tstream);
     }
+
+    fifo_destroy(fifo);
+
+    printf("MADE IT!\n");
+
     //fclose(phstream);
 
     retstr->time_total = time-o.time_start;
