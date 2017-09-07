@@ -1,0 +1,6 @@
+
+file='/SPENCEdata/Research/database/CAPER/test_Spence_08142017_RxDSP_fscc_acq_510kHz_w_500kHz-20170814-222327-p00.data'
+outfile="`basename ${file}`"
+
+./core-fft.py -C -N 2048 -F 333000 -a 6 --ngdef $file "${outfile%%.data}--6avg_512FFT.data"
+./convert_core-fft_output_to_ps.sh --input "${outfile%%.data}--6avg_512FFT.data" -d "${outfile%%.data}--6avg_512FFT.data.ngdef"

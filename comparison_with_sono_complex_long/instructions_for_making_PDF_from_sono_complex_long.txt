@@ -1,0 +1,14 @@
+#2017/09/06
+#Suppose you've acquired the file "testFile."
+#(I used "test_Spence_08142017_RxDSP_fscc_acq_510kHz-20170814-221531-p00.data";
+#it is located in "/SPENCEdata/Research/database/CAPER/")
+#
+#Do the following to convert the acquisition
+#to a spectrogram using sono_complex_long, gray, and ps2pdf:
+
+file=/SPENCEdata/Research/database/CAPER/test_Spence_08142017_RxDSP_fscc_acq_510kHz-20170814-221531-p00.data
+cd /home/aurora/data/gray_script_and_def_file/
+od -v -t u1 -w2 -A n ${file} | ./sono_complex_long
+sudo mv graydata "${file%%.data}.graydata"
+gray -d ngray.def "${file%%.data}.graydata"; mv gray.ps "${file%%.data}.ps"
+ps2pdf "${file%%.data}.ps"

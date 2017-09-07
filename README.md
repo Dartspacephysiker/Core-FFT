@@ -1,11 +1,16 @@
 #Core-FFT
 
 ###Things you might have trouble with
-------------------------------------------------------------------------------------
-Error message                                    | Solution                        |
--------------------------------------------------|---------------------------------|
-fatal error: Python.h: No such file or directory | sudo apt-get install python-dev |
-------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
+Error message                                                     | Solution                                          |
+------------------------------------------------------------------|---------------------------------------------------|
+fatal error: Python.h: No such file or directory                  | sudo apt-get install python-dev                   |
+------------------------------------------------------------------|---------------------------------------------------|
+Compile error: /usr/bin/ld: cannot find -lfftw3_threads           | compile FFTW3 with config option --enable-threads |
+------------------------------------------------------------------|---------------------------------------------------|
+/usr/bin/ld: /usr/local/lib/libfftw3.a(alloc.o): [blah blah blah] | Recompile FFTW with config option --with-pic      |
+------------------------------------------------------------------|----------------------------------------------------
+
 
 Looking to run this show? Make sure you include the following on the command line:--bins [N], -F [freq], and both input and output files. Otherwise you will be in a world of hurt trying to figure out why nothing runs.
 
