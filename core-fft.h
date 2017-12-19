@@ -69,6 +69,8 @@ struct core_param {
 
         polynomial_t poly[CORE_MAXCHAN];
         double frequency;
+        /* double maxFreq; */
+        /* double minFreq; */
         double time_start;
         double time_stop;
         double time_avg;
@@ -87,6 +89,7 @@ struct core_param {
         bool linear;
         bool oldheader;
         int newheader;
+        int junkRxDSPHeader;
 };
 
 struct core_return {

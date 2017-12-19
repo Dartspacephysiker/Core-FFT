@@ -41,7 +41,7 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     /* char *fifo_outbytes; */
     char fifo_srch[18];
 
-    long int RxDSPAcqSize,RxDSPHeaderSize;
+    long int RxDSPAcqSize,RxDSPHeaderSize,has_DartmouthRxDSP_headers;
     unsigned int seekRxDSPHeader,endianSwap; //2017/09/06 Added by Spence
 
     long int BYTESBEFDARTMOUTH,BYTESINCDARTMOUTH;
@@ -49,7 +49,8 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     /* long int hPosInSamps,backShift,forwardShift,headerCount; */
     /* short int *hptr; */
 
-    seekRxDSPHeader = 1;
+    /* has_DartmouthRxDSP_headers = 0; */
+    seekRxDSPHeader = 0;
     endianSwap = 1;
     BYTESBEFDARTMOUTH = 132;
     BYTESINCDARTMOUTH = 44;
@@ -218,50 +219,54 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 	    }
 	} else {
 
-	    /* printf("Available: %d\n",(fifo_size-fifo_avail(fifo))/1024/1024);	     */
-	    /* if ( fifo_avail(fifo) < 2*RxDSPAcqSize ){ */
-	    if ( fifo_avail(fifo) < RxDSPAcqSize ){
-		seekRxDSPHeader = 1;
 
-		/* fifo_writefromstream(fifo,istream,fifo_size-fifo_avail(fifo));		 */
-		/* fifo_writefromstream(fifo,istream,fifo_size-fifo_avail(fifo));		 */
-		fifo_flush(fifo);
-		fifo_writefromstream(fifo,istream,RxDSPAcqSize);		
+	    if (o.junkRxDSPHeader) {
 
-	    }
+		printf("Looking for RxDSP header ...\n");
+		/* printf("Available: %d\n",(fifo_size-fifo_avail(fifo))/1024/1024);	     */
+		/* if ( fifo_avail(fifo) < 2*RxDSPAcqSize ){ */
+		if ( fifo_avail(fifo) < RxDSPAcqSize ){
+		    seekRxDSPHeader = 1;
 
-	    while (seekRxDSPHeader) {
+		    /* fifo_writefromstream(fifo,istream,fifo_size-fifo_avail(fifo));		 */
+		    /* fifo_writefromstream(fifo,istream,fifo_size-fifo_avail(fifo));		 */
+		    fifo_flush(fifo);
+		    fifo_writefromstream(fifo,istream,RxDSPAcqSize);		
 
-		//try to kill headers right away
-		fifo_loc = fifo_search(fifo, 2*RxDSPAcqSize, fifo_srch, 18);
+		}
 
-		/* if ( (fifo_loc != -1) && (fifo_headpos_rel_to_fifo_base(fifo) < (fifo_loc-BYTESBEFDARTMOUTH)) ) { */
-		if (fifo_loc != -1) {
+		while (seekRxDSPHeader) {
+
+		    //try to kill headers right away
+		    fifo_loc = fifo_search(fifo, 2*RxDSPAcqSize, fifo_srch, 18);
+
+		    /* if ( (fifo_loc != -1) && (fifo_headpos_rel_to_fifo_base(fifo) < (fifo_loc-BYTESBEFDARTMOUTH)) ) { */
+		    if (fifo_loc != -1) {
 		    
-		    //print skips array		
-		    /* printf("[%0.5d SAMPLES ARRAY]\n",ffts); */
-		    /* printf("[%0.5d BEFORE       ]\n",ffts); */
-		    /* printf("%0.4d      %0.4X, ",0,(long int) (*(fifo->head))); */
-		    /* /\* printf("%0.4X, ",); *\/ */
-		    /* for (i = 1; i < RxDSPHeaderSize/2; i++) { */
-		    /* 	if (i*2 % 16 == 0) { */
-		    /* 	    printf("\n%0.4d      %0.4X, ",i,(unsigned int) *((char *) ((long int)fifo->head+i*2))); */
-		    /* 	} else { */
-		    /* 	    printf("%0.4X, ",(unsigned int) *((char *)((long int)fifo->head+i*2))); */
-		    /* 	} */
-		    /* 	if (i*2 == (RxDSPHeaderSize - 2)) printf("\n"); */
-		    /* } */
+			//print skips array		
+			/* printf("[%0.5d SAMPLES ARRAY]\n",ffts); */
+			/* printf("[%0.5d BEFORE       ]\n",ffts); */
+			/* printf("%0.4d      %0.4X, ",0,(long int) (*(fifo->head))); */
+			/* /\* printf("%0.4X, ",); *\/ */
+			/* for (i = 1; i < RxDSPHeaderSize/2; i++) { */
+			/* 	if (i*2 % 16 == 0) { */
+			/* 	    printf("\n%0.4d      %0.4X, ",i,(unsigned int) *((char *) ((long int)fifo->head+i*2))); */
+			/* 	} else { */
+			/* 	    printf("%0.4X, ",(unsigned int) *((char *)((long int)fifo->head+i*2))); */
+			/* 	} */
+			/* 	if (i*2 == (RxDSPHeaderSize - 2)) printf("\n"); */
+			/* } */
 
 
 
-		    /* fifo_skip(fifo,fifo_srch,18,0,RxDSPHeaderSize,fifo_avail(fifo),(-1)*BYTESBEFDARTMOUTH); */
+			/* fifo_skip(fifo,fifo_srch,18,0,RxDSPHeaderSize,fifo_avail(fifo),(-1)*BYTESBEFDARTMOUTH); */
 
-		    //try killing instead of skip
-		    fifo_kill(fifo, fifo_loc);
-		    break;
-		} else break;
+			//try killing instead of skip
+			fifo_kill(fifo, fifo_loc);
+			break;
+		    } else break;
 
-	    }
+		}
 
 	    //OLD WAY
 	    /* ret = fread(samples,bps,o.N,istream); */
@@ -394,12 +399,158 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 
 	    /* fifo_read((char *) samples, fifo, s_bytes); */
 
+
+	    } else {
+
+		ret = fread(samples,bps,o.N,istream);
+		if (ret != o.N) {
+		    printf("Failed to read from data file.\n");
+		}
+
+
+	    }
+	    
 	}
 
-	
 	//THESE TWO LINES ARE NEW
-	while (fifo_avail(fifo) >= s_bytes) {
-	    fifo_read((char *) samples, fifo, s_bytes);
+	if (o.junkRxDSPHeader) {
+
+	    while (fifo_avail(fifo) >= s_bytes) {
+		fifo_read((char *) samples, fifo, s_bytes);
+
+		/*
+		 * Cast into fftw_complex input array, windowing too.
+		 */
+		//	if (tcd>>15 == 1) tcd -= 32768;
+		//	if (tcd>>15 == 1) tcd -= 32768;
+		for (i = 0; i < o.N; i++) {
+		    if (endianSwap) {
+			input[i] =  ((double) endswp(samples[2*i]));
+			input[i] += ((double) endswp(samples[2*i+1]))*I;
+		    }
+		    else {
+			input[i] =  ((double) samples[2*i]);
+			input[i] += ((double) samples[2*i+1])*I;
+		    }
+		    /* input[i]  = ((double) samples[2*i]  ); */
+		    /* input[i] += ((double) samples[2*i+1])*I; */
+		    input[i] *= window[i];
+		}
+
+		fftw_execute(fftplan); // FOR GLORY!!!
+
+		/*
+		 * Get the squared magnitude, adjust powers
+		 */
+		for (i = 0; i < nyq; i++) {
+		    iphs = 0;
+
+		    /*
+		     * Need the second half of output[] first,
+		     * then first half second, because that's
+		     * how DFTs output their frequencies.
+		     */
+		    if (i < half) {
+			datai = output[i+half];
+		    } else {
+			datai = output[i-half];
+		    }
+
+		    if (iavg == 0) avg_mag[i] = 0; // First average, so initialize
+		    avg_mag[i] += pow(cabs(datai),2);
+
+		    /*			if (o.phases) {
+					for (k = j+1; k < o.n_chan; k++) {
+					if (iavg == 0) avg_phs[i][j][iphs] = 0;
+					avg_phs[i][j][iphs] += datai[i][j]*conj(datai[i][k]);
+					iphs++;
+					}
+					}*/
+		}
+
+		//		printf("Average #%i\n",iavg+1);
+
+		iavg++;
+		if (iavg == o.avg) {
+		    /*
+		     * We've averaged enough, output to files.
+		     */
+		    if (tstream != NULL) {
+			fscanf(tstream,"%lf\n",&time);
+		    }
+
+		    if (o.verbose) printf("%f\n",time);
+
+		    fprintf(ostream,"%8.8f\n",time);  // Timestamps
+
+		    /*			if (o.phases) {
+					fprintf(phstream,"%.8f\n",time);
+					}
+		    */
+		    for (i = bl_first-1; i < bl_last; i++) {
+			if (o.linear == true) {
+			    return(1);  //not working
+			    power = avg_mag[i]/o.avg;
+			} else {
+			    power = lround(10 * log10(avg_mag[i]/o.avg));	// log10(|x|^2)
+			}
+
+			//power &= 65535; // Trim to 16 bits.
+			if (!o.binary) {
+			    fprintf(ostream,"%li\n", power);
+			} else {
+			    // Blerg
+			}
+
+			/*
+			 * Find global min & max.
+			 */
+			if (ffts < o.avg) {
+			    minmag = maxmag = power;
+			} else {
+			    minmag = fmin(power,minmag);
+			    maxmag = fmax(power,maxmag);
+			}
+
+			/*				if (o.phases) {
+							for (k = 0; k < N_PHASES; k++) {
+							nphs = avg_phs[i][j][k]/( \
+							avg_mag[i][n_phsmap[k][0]] * \
+							avg_mag[i][n_phsmap[k][1]] );
+							if (k > 0) fprintf(phstream," ");
+							fprintf(phstream,"%2.2f %2.2f",cabs(nphs),carg(nphs));
+							}
+							fprintf(phstream,"\n");
+							}*/
+		    }
+
+		    /* Add time per avg. */
+		    if (o.time_avg > 0) {
+			time += o.time_avg;
+		    }
+
+		    iavg = 0;
+
+		}
+		ffts++;
+
+		if (ffts == o.n_ffts) break;
+		if ((o.time_stop != 0) && (time > o.time_stop)) break;
+
+		/*
+		 * This will add o.time_nffts to the timestamp every o.time_fftmod ffts.
+		 * Interaction with o.time_avg must be carefully considered to get
+		 * the correct timestamp advancement.  Also note that some programs that
+		 * may end up processing this data (e.g. for ps making) do not like it
+		 * when timestamps increase inconsistently.
+		 */
+		if ((o.time_nfft > 0) && (ffts % o.time_fftmod == 0)) {
+		    time += o.time_nfft;
+		}
+
+	    }
+
+	} else {
 
 	    /*
 	     * Cast into fftw_complex input array, windowing too.
@@ -532,7 +683,6 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 	    }
 
 	}
-
     }
 
     fclose(istream);

@@ -55,7 +55,7 @@ int fifo_writefromstream(struct simple_fifo *fifo, FILE *istream, long int new_s
     long int span = fifo->size - new_size; // Amount of data to save
     long int shift = fifo->head - fifo->base; // Current read point
 
-  	printf("fifo_writefromstream(): have %li, adding %li.\n", fifo->tail-fifo->head, new_size);fflush(stdout);
+  	/* printf("fifo_writefromstream(): have %li, adding %li.\n", fifo->tail-fifo->head, new_size);fflush(stdout); */
 
   if (new_size >= shift) {
     memmove(fifo->base, fifo->base+new_size, span);
@@ -79,7 +79,7 @@ long int fifo_read(char *out, struct simple_fifo *fifo, long int bytes) {
   long int ret = 0;
   void *pret;
 
-  	printf("fifo_read(): want %li, have %li.\n", bytes, fifo_avail(fifo));fflush(stdout);
+  	/* printf("fifo_read(): want %li, have %li.\n", bytes, fifo_avail(fifo));fflush(stdout); */
 
   if (bytes <= fifo_avail(fifo)) {
     if (out == NULL) out = malloc(bytes); // Malloc if out is new

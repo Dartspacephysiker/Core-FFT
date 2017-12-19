@@ -34,11 +34,11 @@ parser = OptionParser(usage="""pyfft: command line fftage,
 
     %prog [options] <input file> [output file]""")
 
-parser.set_defaults(avg=0, phases=False, ng=False, X=0, agc_bin=0, agc_lvl=0,
+parser.set_defaults(avg=0, phases=False, ng=False, ngtitle='', ngsubtitle='', X=0, agc_bin=0, agc_lvl=0,
                     time_stop=0, time_avg=0, time_nfft=0, time_fftmod=0, skip=0,
                     bl_last=-1, bl_first=-1, nchan=1, complex=False, header=0,
                     skip_avg=0, skip_fft=0, timefile="", verbose=False, threads=1,
-                    uint8=False, windiv=1, ss=0, overlap=0, time_start=0)
+                    uint8=False, windiv=1, ss=0, overlap=0, time_start=0, freq=10000000)
 
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                   help="print status messages to stdout [default: quiet].")
@@ -49,7 +49,7 @@ parser.add_option("-U", "--uint8", action="store_true", dest="uint8",
 parser.add_option("-D", "--float", dest="float", type='int',
                   help="floating point inputs (4 or 8-byte) [0].")
 parser.add_option("-H", "--header", dest="header", type='int',
-                  help="parse a header from the input file [0=No];1=Head;4=Foot.")
+                  help="parse a header from the input file [0=No];1=Head;2=Junk RxDSP header;4=Foot.")
 parser.add_option("-N", "--bins", dest="N", type='int',
                   help="number of fft bins.")
 parser.add_option("-O", "--overlap", dest="overlap", type='int',
@@ -76,6 +76,10 @@ parser.add_option("--agc-lvl", "--agc-level", dest="agc_lvl", type='float',
                   help="level to AGC to.")
 parser.add_option("--ngdef", action="store_true", dest="ng",
                   help="write timestamps, and ngray.def after completion [False].")
+parser.add_option("--ngtitle", dest="ngtitle", type='string',
+                  help="Title for pdf [outfile name].")
+parser.add_option("--ngsubtitle", dest="ngsubtitle", type='string',
+                  help="Subtitle for pdf [' '].")
 parser.add_option("--tf", "--timefile", dest="timefile", type="string",
                   help="file containing timestamps (one per avg) [none].")
 parser.add_option("-n", "--nchan", dest="nchan", type='int',
@@ -86,6 +90,10 @@ parser.add_option("-p", "--phase", action="store_true", dest="phases",
                   help="write phases after magnitudes [True].")
 parser.add_option("-F", "--freq", "--frequency", dest="freq", type='float',
                   help="frequency for timestamps [10MHz].")
+parser.add_option("--max-freq", "--maximum-frequency", dest="maxFreq", type='float',
+                  help="maximum frequency for plot [10MHz].")
+parser.add_option("--min-freq", "--minimum-frequency", dest="minFreq", type='float',
+                  help="minimum frequency for plot [0Hz].")
 parser.add_option("-S", "--start", "--start-sample", dest="ss", type='int',
                   help="sample to start at [0].")
 parser.add_option("-X", "--nffts", dest="X", type='int',
@@ -142,6 +150,13 @@ if o.freq > 0:
 # elif o.header:
 #    head.getfloat('ggse_header','frequency')
 
+options.junkRxDSPHeader = (o.header == 2) and (o.complex)
+# if o.maxFreq > 0:
+#     options.maxFreq = o.maxFreq
+
+# if o.minFreq > 0:
+#     options.minFreq = o.minFreq
+
 if o.time_start != 0:
     options.time_start = o.time_start
 # elif o.header:
@@ -193,7 +208,8 @@ else:
         print "Error: multichannel not implemented."
 
 if ret == 0:
-    if o.header > 0:
+    if (o.header > 0) and (o.header != 2):
+        print "o.header : %s" % o.header
         newh = ggseHeader.ggseHeader('fft')
 
         ggseHeader.cpSectionCopy(head, 'ggse_header', newh, 'ggse_header')
@@ -211,16 +227,34 @@ if ret == 0:
             newh.set('ggse_header', 'fft_agc', True)
 
     if o.nchan == 1:
-        if o.header > 0:
+        if (o.header > 0) and (o.header != 2):
             newh.set('ggse_header', 'fft_channel', 1)
             ggseHeader.tf(o.outfile, newh, mode='append', replace=False)
 
         if o.ng:
             tinc = 2.0
 
-            ylow = 0.0 if o.bl_first == -1 else o.freq / o.N * o.bl_first * 0.001
-            yhigh = o.freq / 2000.0 if o.bl_last == - \
-                1 else o.freq / o.N * o.bl_last * 0.001
+            if o.ngtitle != '':
+                ngtitle = o.ngtitle
+            else:
+                ngtitle = o.outfile
+
+            if o.ngsubtitle != '':
+                ngsubtitle = o.ngsubtitle
+            else:
+                ngsubtitle = ''
+
+            ylow = 0.0 if o.bl_first == -1 else o.freq / \
+                o.N * o.bl_first * 0.001  # 0.001 for kHz
+            yhigh = o.freq / 2000.0 if o.bl_last == -1 else o.freq / o.N * \
+                o.bl_last * 0.001  # 0.001 for kHz; div by 2000.0 for kHz, Nyquist
+
+            if o.maxFreq > 0:
+                yhigh = o.maxFreq * 0.001
+
+            if o.minFreq > 0:
+                ylow = o.minFreq * 0.001
+
             yinc = (yhigh - ylow) / 20.0
 
             if o.bl_first != -1 and o.bl_last != -1:
@@ -236,7 +270,7 @@ if ret == 0:
 
             ngwrite(o.outfile, nyq, yhigh, ylow, yinc,
                     retstr.max[0], retstr.min[0],
-                    o.outfile)
+                    ngtitle, ngsubtitle)
 
     else:
         for i in range(0, options.n_chan):
