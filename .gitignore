@@ -23,3 +23,7 @@
 *.hex
 # Bonus
 *.pyc
+
+#various dirs
+plots/
+saves_output_etc/

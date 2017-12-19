@@ -22,7 +22,7 @@ def ngwrite(fn, nyq, yhigh, ylow, yinc, blevel, wlevel, title, subtitle=" "):
     ngfile.write("title             " + str(title) + "\n")
     ngfile.write("sub_title         " + str(subtitle) + "\n")
     ngfile.write("x_axis_label      " + " " + "\n")
-    ngfile.write("y_axis_label      " + " " + "\n")
+    ngfile.write("y_axis_label      " + "Frequency (kHz)" + "\n")
     ngfile.write("use_magic_stamps  " + "no" + "\n")
     ngfile.write("magic_char        " + "*" + "\n")
 

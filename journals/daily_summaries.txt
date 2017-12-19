@@ -1,0 +1,11 @@
+2017/12/19
+==========
+*Added some simple features to Core-FFT, including ngdeftitle, ngdefsubtitle, header=2 to skip Dartmouth headers in complex RxDSP data files.
+*Figured out how to use dd to shrink a file to a desired size. In specific, I shrunk the file of interest in the *Ereinion_files__ch0* journals to an interval covering 20% to 27% of the original.
+
+*Performed FFT of ch0 and ch1 files
+*FFT output shows that the action over ~250–510 kHz (again assuming 2 MHz sampling) temporally coincides in each file.
+*"But when?" They always ask me. I'd say near 01:30:00 UT Here's my arithmetic:
+-->Assuming 2 bytes/sample and 2 MHz sampling, the file covers 22189.97 s, or 6.1636 h.
+-->The action happens beginning about 23.7% into the file, which corresponds to 0.237*6.164 h = 87.8 min.
+-->If the files start at 00:00:02 UT, the action occurs right around 01:30:00 UT.

@@ -17,6 +17,10 @@ do
 	    OUTFILE="$2"
 	    shift # past argument
 	    ;;
+	-r|--outdir)
+	    OUTDIR="$2"
+	    shift # past argument
+	    ;;
 	# --default)
 	#     DEFAULT=YES
 	#     ;;
@@ -71,7 +75,7 @@ if [ -z "${GRAYDEFFILE}" ]; then
 fi
 
 [ -z "${OUTFILE}"     ] && OUTFILE="`basename ${INFILE%%.data}`.pdf"
-
+[ -z "${OUTDIR}"      ] && OUTDIR="./"
 
 [ -n "${GRAYDEFFILE}" ] && echo "GRAY DEF FILE   = ${GRAYDEFFILE}"
 [ -n "${INFILE}"      ] && echo "IN  FILE        = ${INFILE}     "
@@ -85,9 +89,9 @@ while true; do
         [Yy]* )    for file in ${INFILE}; do
 		       echo "Processing $file..."
 		       gray -d ${GRAYDEFFILE} ${file}
-		       ps2pdf gray.ps ${OUTFILE}
+		       ps2pdf gray.ps ${OUTDIR}/${OUTFILE}
 		       # echo "gray -d ${GRAYDEFFILE} ${file}"
-		       # echo "ps2pdf gray.ps ${OUTFILE}"
+		       # echo "ps2pdf gray.ps ${OUTDIR}/${OUTFILE}"
 		       # echo "rm gray.ps			  "
 		   done; break;;
         [Nn]* ) break;;
