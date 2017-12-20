@@ -18,7 +18,9 @@ sFreq=2000000
 dtSamp=`echo "1 / ${sFreq}" | bc -l`
 T_ADD_AFTER_AVG=`echo "${dtSamp} * ${NFFTBins} * ${avgsPerTStamp}" | bc -l`
 
-tStartString="2016-08-11/00:00:02"
+# tStartString="2016-08-11/01:28:12.59"  #Can't do millisec in C (not easily), and file started two sec after 00:00:00
+# 
+tStartString="2016-08-11/01:28:13"
 
 tString="m"
 

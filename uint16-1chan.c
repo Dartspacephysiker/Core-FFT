@@ -2,7 +2,6 @@
 #define _GNU_SOURCE
 #endif
 
-#include <time.h>
 #include "core-fft.h"
 /* #include <stdbool.h> */
 
@@ -30,8 +29,10 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
 	/* For timestamp conversion */
 	double tConv; 
+	struct tm tm_initial;
 	struct tm tm_info;
 	int haveTimeStr;
+	double seconds;
 	char tBuf[255];
 
 	signal(SIGINT,do_depart);
@@ -53,9 +54,18 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	/* if there's a start string, use it! */
 	haveTimeStr = 0;
 	if( strncmp(o.tStartString,"",19) > 0) {
-	    memset(&tm_info, 0, sizeof(struct tm));
 	    printf("startString: %s\n",o.tStartString);
+
+	    /* One to keep track of changing time, one to keep start time  */
+	    memset(&tm_initial, 0, sizeof(struct tm));
+	    memset(&tm_info, 0, sizeof(struct tm));
+
+	    strptime(o.tStartString,"%Y-%m-%d/%H:%M:%S",&tm_initial);
 	    strptime(o.tStartString,"%Y-%m-%d/%H:%M:%S",&tm_info);
+
+	    /* tm_initial.tm_sec = 0; */
+	    /* tm_info.tm_sec = 0; */
+
 	    /* strftime(tBuf,sizeof(tBuf), "%d %b %Y %H:%M",&tm_info); */
 	    /* puts(tBuf); */
 
@@ -171,6 +181,11 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	ffts = 0;
 	iavg = 0;
 	time = o.time_start;
+	seconds = 0;
+	/* if(haveTimeStr){ */
+	/*     time = 0; */
+	/* } else { */
+	/* } */
 
 	printf("done.\n"); fflush(stdout); fflush(stderr);
 
@@ -250,20 +265,28 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 			if (o.verbose) printf("%f\n",time);
 
 			if(haveTimeStr){
-			    tm_info.tm_sec += time;   // add "time" seconds to the time
-			    time = 0; //What else to do?
-			    mktime( &tm_info);      // normalize it
+
+			    /* Need to update seconds? */
+			    /* printf("time: %.5f, %8.5f\n",time,time*1000); */
+			    if(seconds > 1){
+				tm_info.tm_sec += floor(seconds);
+				seconds -= floor(seconds);
+				mktime( &tm_info);      // normalize tm_info
+			    }
 
 			    if(haveTimeStr == 1){
-				strftime(tBuf,sizeof(tBuf),"%Y-%m-%d/%H:%M:%S",&tm_info);
+				strftime(tBuf,sizeof(tBuf),"%m-%d/%H:%M:%S",&tm_info);
 			    haveTimeStr++;
 			    } else{
 				strftime(tBuf,sizeof(tBuf),"%H:%M:%S",&tm_info);
 			    }
 
-			    fprintf(ostream,"%s\n",asctime( &tm_info));
+			    fprintf(ostream,"%*s.%03.0f\n",strlen(tBuf),tBuf,seconds*1000);
+			    /* printf("%s. %3.0f\n",tBuf,roundl(seconds*((double) 1000))); */
+			    /* printf("%*s.%03.0f\n",strlen(tBuf),tBuf,seconds*1000); */
+			    /* printf("%s\n",tBuf); */
 			} else{
-			    fprintf(ostream,"%8.3f\n",time/tConv);  // Timestamps
+			    fprintf(ostream,"%8.03f\n",time/tConv);  // Timestamps
 			}
 
 /*			if (o.phases) {
@@ -311,6 +334,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 			/* Add time per avg. */
 			if (o.time_avg > 0) {
 				time += o.time_avg;
+				seconds += o.time_avg;
 			}
 			if (o.skip_avg > 0) {
 				ret = fseeko(istream,bskip_avg,SEEK_CUR);
@@ -336,6 +360,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 		 */
 		if ((o.time_nfft > 0) && (ffts % o.time_fftmod == 0)) {
 			time += o.time_nfft;
+			seconds += o.time_nfft;
 		}
 		if (o.skip_fft > 0) {
 			ret = fseeko(istream,bskip_fft,SEEK_CUR);

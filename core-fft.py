@@ -285,14 +285,15 @@ if ret == 0:
             else:
                 nyq = o.N / 2
 
-        if o.tStartString == '':
-            tUnitString = 't'
-            if o.time_units == 's':
-                tUnitString = str(tUnitString) + ' (s)'
-            if o.time_units == 'm':
-                tUnitString = str(tUnitString) + ' (m)'
-            if o.time_units == 'h':
-                tUnitString = str(tUnitString) + ' (h)'
+            tUnitString = ''
+            if o.tStartString == '':
+                tUnitString = 't'
+                if o.time_units == 's':
+                    tUnitString = str(tUnitString) + ' (s)'
+                if o.time_units == 'm':
+                    tUnitString = str(tUnitString) + ' (m)'
+                if o.time_units == 'h':
+                    tUnitString = str(tUnitString) + ' (h)'
 
             ngwrite(o.outfile, nyq, yhigh, ylow, yinc,
                     retstr.max[0], retstr.min[0],
