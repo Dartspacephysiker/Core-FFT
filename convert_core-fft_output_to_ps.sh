@@ -75,13 +75,14 @@ if [ -z "${GRAYDEFFILE}" ]; then
 fi
 
 [ -z "${OUTFILE}"     ] && OUTFILE="`basename ${INFILE%%.data}`.pdf"
-[ -z "${OUTDIR}"      ] && OUTDIR="./"
 
 [ -n "${GRAYDEFFILE}" ] && echo "GRAY DEF FILE   = ${GRAYDEFFILE}"
 [ -n "${INFILE}"      ] && echo "IN  FILE        = ${INFILE}     "
 [ -n "${OUTFILE}"     ] && echo "OUT FILE        = ${OUTFILE}    "
+[ -n "${OUTDIR}"      ] && echo "OUT DIR         = ${OUTDIR}     "
 
 datafile=${INFILE[*]}
+[ -z "${OUTDIR}"      ] && OUTDIR="./"
 
 while true; do
     read -p "Do it?" yn
@@ -90,6 +91,7 @@ while true; do
 		       echo "Processing $file..."
 		       gray -d ${GRAYDEFFILE} ${file}
 		       ps2pdf gray.ps ${OUTDIR}/${OUTFILE}
+		       mv gray.ps ${OUTDIR}/lastgray.ps
 		       # echo "gray -d ${GRAYDEFFILE} ${file}"
 		       # echo "ps2pdf gray.ps ${OUTDIR}/${OUTFILE}"
 		       # echo "rm gray.ps			  "

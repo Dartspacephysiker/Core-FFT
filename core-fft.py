@@ -8,7 +8,7 @@ import sys
 from datetime import date
 
 
-def ngwrite(fn, nyq, yhigh, ylow, yinc, blevel, wlevel, title, subtitle=" "):
+def ngwrite(fn, nyq, yhigh, ylow, yinc, blevel, wlevel, title, subtitle=" ", tUnitString=" "):
     ngfile = open(fn + ".ngdef", "w+")
 
     ngfile.write("y_data_num        " + str(nyq) + "\n")
@@ -21,7 +21,7 @@ def ngwrite(fn, nyq, yhigh, ylow, yinc, blevel, wlevel, title, subtitle=" "):
     ngfile.write("data_white_level  " + str(wlevel) + "\n")
     ngfile.write("title             " + str(title) + "\n")
     ngfile.write("sub_title         " + str(subtitle) + "\n")
-    ngfile.write("x_axis_label      " + " " + "\n")
+    ngfile.write("x_axis_label      " + str(tUnitString) + "\n")
     ngfile.write("y_axis_label      " + "Frequency (kHz)" + "\n")
     ngfile.write("use_magic_stamps  " + "no" + "\n")
     ngfile.write("magic_char        " + "*" + "\n")
@@ -34,11 +34,19 @@ parser = OptionParser(usage="""pyfft: command line fftage,
 
     %prog [options] <input file> [output file]""")
 
-parser.set_defaults(avg=0, phases=False, ng=False, ngtitle='', ngsubtitle='', X=0, agc_bin=0, agc_lvl=0,
-                    time_stop=0, time_avg=0, time_nfft=0, time_fftmod=0, skip=0,
-                    bl_last=-1, bl_first=-1, nchan=1, complex=False, header=0,
-                    skip_avg=0, skip_fft=0, timefile="", verbose=False, threads=1,
-                    uint8=False, windiv=1, ss=0, overlap=0, time_start=0, freq=10000000)
+parser.set_defaults(avg=0, phases=False, ng=False, ngtitle='', ngsubtitle='',
+                    X=0,
+                    agc_bin=0, agc_lvl=0,
+                    time_stop=0, time_avg=0, time_nfft=0, time_fftmod=0, time_units='s', tStartString='',
+                    skip=0,
+                    bl_last=-1, bl_first=-1,
+                    nchan=1, complex=False, header=0,
+                    skip_avg=0, skip_fft=0,
+                    timefile="",
+                    verbose=False,
+                    threads=1,
+                    uint8=False,
+                    windiv=1, ss=0, overlap=0, time_start=0, freq=10000000)
 
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                   help="print status messages to stdout [default: quiet].")
@@ -59,9 +67,13 @@ parser.add_option("-W", "--windiv", dest="windiv", type='int',
 parser.add_option("-a", "--avg", dest="avg", type='int',
                   help="number of ffts to average.")
 parser.add_option("--time-avg", dest="time_avg", type='float',
-                  help="time to add after each avg [0].")
+                  help="time (in seconds) to add after each avg [0].")
 parser.add_option("--time-fft", dest="time_fft", type='float',
-                  help="time to add after each fft [0].")
+                  help="time (in seconds) to add after each fft [0].")
+parser.add_option("--time-units", dest="time_units", type='string',
+                  help="x-axis timestamp units ['s']. Can also be 'm' or 'h.'")
+parser.add_option("--time-start-string", dest="tStartString", type='string',
+                  help="Initial time, in format YYYY-mm-dd/HH:MM:SS [''].")
 parser.add_option("--skip-avg", dest="skip_avg", type='int',
                   help="number of samples to skip after each avg [0].")
 parser.add_option("--skip-fft", dest="skip_fft", type='int',
@@ -164,9 +176,14 @@ if o.time_start != 0:
 else:
     options.time_start = 0
 
+if o.tStartString != '':
+    # tUnitString = 't since ' + str(o.tStartString)
+    options.tStartString = o.tStartString
+
 options.time_stop = o.time_stop
 options.time_avg = o.time_avg
 options.time_nfft = o.time_nfft
+options.time_units = o.time_units
 options.time_fftmod = o.time_fftmod
 options.window = "hann"
 
@@ -268,9 +285,18 @@ if ret == 0:
             else:
                 nyq = o.N / 2
 
+        if o.tStartString == '':
+            tUnitString = 't'
+            if o.time_units == 's':
+                tUnitString = str(tUnitString) + ' (s)'
+            if o.time_units == 'm':
+                tUnitString = str(tUnitString) + ' (m)'
+            if o.time_units == 'h':
+                tUnitString = str(tUnitString) + ' (h)'
+
             ngwrite(o.outfile, nyq, yhigh, ylow, yinc,
                     retstr.max[0], retstr.min[0],
-                    ngtitle, ngsubtitle)
+                    ngtitle, ngsubtitle, tUnitString)
 
     else:
         for i in range(0, options.n_chan):

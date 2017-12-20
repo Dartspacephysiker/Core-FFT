@@ -2,7 +2,9 @@
 #define _GNU_SOURCE
 #endif
 
+#include <time.h>
 #include "core-fft.h"
+/* #include <stdbool.h> */
 
 int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
@@ -10,7 +12,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
 	unsigned long int s_bytes, i_bytes, o_bytes, ret;
 	unsigned long int i, ffts, iavg, /* iphs,*/ nyq, seeksamp, bps;
-    long int bl_first, bl_last;
+	long int bl_first, bl_last;
 	long int power, maxmag = 0, minmag = 0;
 	off_t dataend, bskip_avg = 0, bskip_fft = 0;
 	//	double cur_mag[o.N], avg_mag[o.N], window[o.N], pow_adj;
@@ -25,6 +27,12 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	double time, ratio;
 	struct timespec nsl;
 	FILE *istream, *ostream, *tstream = NULL;//, *phstream;
+
+	/* For timestamp conversion */
+	double tConv; 
+	struct tm tm_info;
+	int haveTimeStr;
+	char tBuf[255];
 
 	signal(SIGINT,do_depart);
 
@@ -41,6 +49,31 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	nyq = o.N/2;
 //	complex double datai[nyq];
 //printf("bps: %d\n",bps);
+
+	/* if there's a start string, use it! */
+	haveTimeStr = 0;
+	if( strncmp(o.tStartString,"",19) > 0) {
+	    memset(&tm_info, 0, sizeof(struct tm));
+	    printf("startString: %s\n",o.tStartString);
+	    strptime(o.tStartString,"%Y-%m-%d/%H:%M:%S",&tm_info);
+	    /* strftime(tBuf,sizeof(tBuf), "%d %b %Y %H:%M",&tm_info); */
+	    /* puts(tBuf); */
+
+	    haveTimeStr = 1;
+	} else {
+	
+	    /* What about time units for x axis? */
+	    tConv = 1;
+	    if( strncmp(o.time_units,"m",1) == 0) {
+		tConv = 60;
+	    } else if( strncmp(o.time_units,"h",1) == 0) {
+		tConv = 3600;
+	    } else if( strncmp(o.time_units,"d",1) == 0) {
+		tConv = 86400;
+	    }
+
+	    printf("tConv: %.0f (units: %s)\n",tConv,o.time_units);
+	}
 
 	/*
 	 * Memory allocation.
@@ -216,7 +249,22 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
 			if (o.verbose) printf("%f\n",time);
 
-			fprintf(ostream,"%8.8f\n",time);  // Timestamps
+			if(haveTimeStr){
+			    tm_info.tm_sec += time;   // add "time" seconds to the time
+			    time = 0; //What else to do?
+			    mktime( &tm_info);      // normalize it
+
+			    if(haveTimeStr == 1){
+				strftime(tBuf,sizeof(tBuf),"%Y-%m-%d/%H:%M:%S",&tm_info);
+			    haveTimeStr++;
+			    } else{
+				strftime(tBuf,sizeof(tBuf),"%H:%M:%S",&tm_info);
+			    }
+
+			    fprintf(ostream,"%s\n",asctime( &tm_info));
+			} else{
+			    fprintf(ostream,"%8.3f\n",time/tConv);  // Timestamps
+			}
 
 /*			if (o.phases) {
 				fprintf(phstream,"%.8f\n",time);

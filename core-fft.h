@@ -74,6 +74,8 @@ struct core_param {
         double time_start;
         double time_stop;
         double time_avg;
+        char *time_units;
+        char *tStartString;
         double time_nfft;
         int time_fftmod;
 

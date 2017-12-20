@@ -8,7 +8,7 @@
 #         These are bytes 17631941807.3088–24563854413.0048
 #         These are bytes 17631941792–24563854400
 # size=88870674432
-# nsamp=size/16
+# nsamp=size/2
 # Try this:
 # 
 # binDir='/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117'
