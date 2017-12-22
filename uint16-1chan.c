@@ -54,6 +54,8 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	/* if there's a start string, use it! */
 	haveTimeStr = 0;
 	if( strncmp(o.tStartString,"",19) > 0) {
+
+	    setenv("TZ", "UTC0", 1); //Set timezone to UTC
 	    printf("startString: %s\n",o.tStartString);
 
 	    /* One to keep track of changing time, one to keep start time  */
