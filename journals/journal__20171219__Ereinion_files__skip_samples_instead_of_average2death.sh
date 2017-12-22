@@ -31,9 +31,17 @@ avgsPerTStamp=1024
 maxFreq=1000000
 minFreq=0
 
+#0  20160629-004501
+#1  20160811-000002
+#2  20160820-001005
+#3  20160822-012002
+#4  20160925-004002
+datNum=1
+
+DATE=(20160629-004501 20160811-000002 20160820-001005 20160822-012002 20160925-004002)
 CHNUM=0
 
-ngTitle="SPS USRP CH${CHNUM}, 2016/08/11"
+ngTitle="SPS USRP CH${CHNUM}, ${DATE[${datNum}]}"
 ngSubtitle="AVG=${NAvg}, NBIN=${NFFTBins}"
 
 NAVGSKIP=$(( avgsPerTStamp - NAvg ))
@@ -43,9 +51,9 @@ sFreq=2000000
 dtSamp=`echo "1 / ${sFreq}" | bc`
 T_ADD_AFTER_AVG=`echo "${dtSamp} * ${NFFTBins} * ${avgsPerTStamp}" | bc`
 
-file="/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117/SPSusrp1-ch${CHNUM}-20160811-000002-bw2000000-cf1000000.dat"
+file="/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117/SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2000000-cf1000000.dat"
 # outfile="`basename ${file}`"
-outfile="SPSusrp1-ch${CHNUM}-20160811-000002-bw2MHz-cf1MHz.dat"
+outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz.dat"
 outer="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data"
 ngdefFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data.ngdef"
 pdfFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.pdf"
