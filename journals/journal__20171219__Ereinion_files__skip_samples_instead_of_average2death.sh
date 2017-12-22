@@ -36,7 +36,7 @@ minFreq=0
 #2  20160820-001005
 #3  20160822-012002
 #4  20160925-004002
-datNum=1
+datNum=2
 CHNUM=1
 
 DATE=(20160629-004501 20160811-000002 20160820-001005 20160822-012002 20160925-004002)
@@ -60,7 +60,8 @@ else
 fi
 file="${dir}/SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2000000-cf1000000.dat"
 # outfile="`basename ${file}`"
-outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz--complex.dat"
+# outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz-complex.dat"
+outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz.dat"
 outer="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data"
 ngdefFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data.ngdef"
 pdfFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.pdf"
@@ -72,7 +73,6 @@ plotDir=/usr/src/Core-FFT/plots
 	       --max-freq=${maxFreq} \
 	       --min-freq=${minFreq} \
 	       -a ${NAvg} \
-	       --complex \
 	       --ngdef \
 	       --ngtitle="${ngTitle}" \
 	       --ngsubtitle="${ngSubtitle}" \

@@ -95,6 +95,7 @@ while true; do
 		       # echo "gray -d ${GRAYDEFFILE} ${file}"
 		       # echo "ps2pdf gray.ps ${OUTDIR}/${OUTFILE}"
 		       # echo "rm gray.ps			  "
+		       echo "Check out ${OUTDIR}/${OUTFILE}"
 		   done; break;;
         [Nn]* ) break;;
         * ) echo "It's not that simple.";;
