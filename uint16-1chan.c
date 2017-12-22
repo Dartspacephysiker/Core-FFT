@@ -184,10 +184,6 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	iavg = 0;
 	time = o.time_start;
 	seconds = 0;
-	/* if(haveTimeStr){ */
-	/*     time = 0; */
-	/* } else { */
-	/* } */
 
 	printf("done.\n"); fflush(stdout); fflush(stderr);
 
@@ -266,7 +262,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
 			if (o.verbose) printf("%f\n",time);
 
-			if(haveTimeStr){
+			if(haveTimeStr == 1){
 
 			    /* Need to update seconds? */
 			    /* printf("time: %.5f, %8.5f\n",time,time*1000); */

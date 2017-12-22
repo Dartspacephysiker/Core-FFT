@@ -33,6 +33,14 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     struct timespec nsl;
     FILE *istream, *ostream, *tstream = NULL;//, *phstream;
 
+    /* For timestamp conversion */
+    double tConv; 
+    struct tm tm_initial;
+    struct tm tm_info;
+    int haveTimeStr;
+    double seconds;
+    char tBuf[255];
+
     //FIFOness for Dartmouth RxDSP
     struct simple_fifo *fifo;
     long int fifo_loc,fifo_size;
@@ -81,6 +89,42 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
     nyq = o.N;
     ol_bytes = o.overlap*bps; // bytes overlapped
     ol_shift = s_bytes-ol_bytes; // bytes kept for overlap
+
+    /* if there's a start string, use it! */
+    haveTimeStr = 0;
+    if( strncmp(o.tStartString,"",19) > 0) {
+
+	setenv("TZ", "UTC0", 1); //Set timezone to UTC
+	printf("startString: %s\n",o.tStartString);
+
+	/* One to keep track of changing time, one to keep start time  */
+	memset(&tm_initial, 0, sizeof(struct tm));
+	memset(&tm_info, 0, sizeof(struct tm));
+
+	strptime(o.tStartString,"%Y-%m-%d/%H:%M:%S",&tm_initial);
+	strptime(o.tStartString,"%Y-%m-%d/%H:%M:%S",&tm_info);
+
+	/* tm_initial.tm_sec = 0; */
+	/* tm_info.tm_sec = 0; */
+
+	/* strftime(tBuf,sizeof(tBuf), "%d %b %Y %H:%M",&tm_info); */
+	/* puts(tBuf); */
+
+	haveTimeStr = 1;
+    } else {
+	
+	/* What about time units for x axis? */
+	tConv = 1;
+	if( strncmp(o.time_units,"m",1) == 0) {
+	    tConv = 60;
+	} else if( strncmp(o.time_units,"h",1) == 0) {
+	    tConv = 3600;
+	} else if( strncmp(o.time_units,"d",1) == 0) {
+	    tConv = 86400;
+	}
+
+	printf("tConv: %.0f (units: %s)\n",tConv,o.time_units);
+    }
 
     /*
      * Memory allocation.
@@ -481,7 +525,30 @@ int complex_1chan(struct core_param o, struct core_return *retstr) {
 
 		    if (o.verbose) printf("%f\n",time);
 
-		    fprintf(ostream,"%8.8f\n",time);  // Timestamps
+		    if(haveTimeStr == 1){
+
+			/* Need to update seconds? */
+			/* printf("time: %.5f, %8.5f\n",time,time*1000); */
+			if(seconds > 1){
+			    tm_info.tm_sec += floor(seconds);
+			    seconds -= floor(seconds);
+			    mktime( &tm_info);      // normalize tm_info
+			}
+
+			if(haveTimeStr == 1){
+			    strftime(tBuf,sizeof(tBuf),"%m-%d/%H:%M:%S",&tm_info);
+			    haveTimeStr++;
+			} else{
+			    strftime(tBuf,sizeof(tBuf),"%H:%M:%S",&tm_info);
+			}
+
+			fprintf(ostream,"%*s.%03.0f\n",strlen(tBuf),tBuf,seconds*1000);
+			/* printf("%s. %3.0f\n",tBuf,roundl(seconds*((double) 1000))); */
+			/* printf("%*s.%03.0f\n",strlen(tBuf),tBuf,seconds*1000); */
+			/* printf("%s\n",tBuf); */
+		    } else{
+			fprintf(ostream,"%8.03f\n",time/tConv);  // Timestamps
+		    }
 
 		    /*			if (o.phases) {
 					fprintf(phstream,"%.8f\n",time);

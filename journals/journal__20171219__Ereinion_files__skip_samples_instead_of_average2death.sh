@@ -24,7 +24,7 @@
 # dd if=${binDir}/${binFile} bs=512k | { dd bs=512k count=33630 of=/dev/null; dd bs=512k of=${binDir}/${binOut}; } 
 # dd if=${binDir}/${binOut} bs=512k | { dd bs=512k count=13222 of=${binDir}/${binFinal}; dd bs=512k of=/dev/null; } 
 NFFTBins=4096			# Number of FFT bins
-NAvg=4				# Number of FFTs to average
+NAvg=8				# Number of FFTs to average
 avgsPerTStamp=1024
 # topFreq=1541000			# in Hz
 # topFreq=666000
@@ -37,11 +37,13 @@ minFreq=0
 #3  20160822-012002
 #4  20160925-004002
 datNum=1
+CHNUM=1
 
 DATE=(20160629-004501 20160811-000002 20160820-001005 20160822-012002 20160925-004002)
-CHNUM=0
+dateStr="${DATE[datNum]:0:4}-${DATE[datNum]:4:2}-${DATE[datNum]:6:2}"
+tStartString="${dateStr}/${DATE[datNum]:9:2}:${DATE[datNum]:11:2}:${DATE[datNum]:13:2}"
 
-ngTitle="SPS USRP CH${CHNUM}, ${DATE[${datNum}]}"
+ngTitle="SPS USRP CH${CHNUM}, ${dateStr}"
 ngSubtitle="AVG=${NAvg}, NBIN=${NFFTBins}"
 
 NAVGSKIP=$(( avgsPerTStamp - NAvg ))
@@ -51,9 +53,14 @@ sFreq=2000000
 dtSamp=`echo "1 / ${sFreq}" | bc`
 T_ADD_AFTER_AVG=`echo "${dtSamp} * ${NFFTBins} * ${avgsPerTStamp}" | bc`
 
-file="/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117/SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2000000-cf1000000.dat"
+if [ "${DATE[datNum]}" = "20160811-000002" ]; then
+    dir=/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117
+else
+    dir=/thelonious_data2/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117/
+fi
+file="${dir}/SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2000000-cf1000000.dat"
 # outfile="`basename ${file}`"
-outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz.dat"
+outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz--complex.dat"
 outer="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data"
 ngdefFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data.ngdef"
 pdfFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.pdf"
@@ -65,11 +72,13 @@ plotDir=/usr/src/Core-FFT/plots
 	       --max-freq=${maxFreq} \
 	       --min-freq=${minFreq} \
 	       -a ${NAvg} \
+	       --complex \
 	       --ngdef \
 	       --ngtitle="${ngTitle}" \
 	       --ngsubtitle="${ngSubtitle}" \
 	       --skip-avg=${NSAMP_SKIP_AFTER_AVG} \
 	       --time-avg=${T_ADD_AFTER_AVG} \
+	       --time-start-string=${tStartString} \
 	        ${file} ${saveDir}/${outer} && \
     ../convert_core-fft_output_to_ps.sh --input ${saveDir}/${outer} -d ${saveDir}/${ngdefFile} --outdir ${plotDir}
     

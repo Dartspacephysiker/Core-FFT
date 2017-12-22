@@ -37,7 +37,8 @@ parser = OptionParser(usage="""pyfft: command line fftage,
 parser.set_defaults(avg=0, phases=False, ng=False, ngtitle='', ngsubtitle='',
                     X=0,
                     agc_bin=0, agc_lvl=0,
-                    time_stop=0, time_avg=0, time_nfft=0, time_fftmod=0, time_units='s', tStartString='',
+                    time_stop=0, time_avg=0, time_nfft=0, time_fftmod=0,
+                    time_units='s', tStartString='',
                     skip=0,
                     bl_last=-1, bl_first=-1,
                     nchan=1, complex=False, header=0,
@@ -176,9 +177,9 @@ if o.time_start != 0:
 else:
     options.time_start = 0
 
-if o.tStartString != '':
+# if o.tStartString != '':
     # tUnitString = 't since ' + str(o.tStartString)
-    options.tStartString = o.tStartString
+options.tStartString = o.tStartString
 
 options.time_stop = o.time_stop
 options.time_avg = o.time_avg

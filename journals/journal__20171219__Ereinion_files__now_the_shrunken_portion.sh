@@ -6,9 +6,17 @@ avgsPerTStamp=16
 maxFreq=1000000
 minFreq=0
 
+#0  20160629-004501
+#1  20160811-000002
+#2  20160820-001005
+#3  20160822-012002
+#4  20160925-004002
+datNum=1
+
+DATE=(20160629-004501 20160811-000002 20160820-001005 20160822-012002 20160925-004002)
 CHNUM=0
 
-ngTitle="SPS USRP CH${CHNUM}, 2016/08/11"
+ngTitle="SPS USRP CH${CHNUM}, ${DATE[${datNum}]}"
 ngSubtitle="AVG=${NAvg}, NBIN=${NFFTBins}"
 
 NAVGSKIP=$(( avgsPerTStamp - NAvg ))
@@ -27,9 +35,14 @@ tString="m"
 suff='20-28pct'
 suff='24-28pct'
 
-file="/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117/SPSusrp1-ch${CHNUM}-20160811-000002-bw2000000-cf1000000__${suff}.dat"
+if [ "${DATE[datNum]}" = "20160811-000002" ]; then
+    dir=/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117
+else
+    dir=/thelonious_data2/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117/
+fi
+file="${dir}/SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2000000-cf1000000.dat"
 # outfile="`basename ${file}`"
-outfile="SPSusrp1-ch${CHNUM}-20160811-000002-bw2MHz-cf1MHz__${suff}.dat"
+outfile="SPSusrp1-ch${CHNUM}-${DATE[datNum]}-bw2MHz-cf1MHz.dat"
 outer="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data"
 ngdefFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.data.ngdef"
 pdfFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.pdf"
