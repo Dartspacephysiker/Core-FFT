@@ -31,8 +31,8 @@ NAVGSKIP=$(( avgsPerTStamp - NAvg ))
 NSAMP_SKIP_AFTER_AVG=$(( NAVGSKIP * NFFTBins ))
 
 sFreq=2000000
-dtSamp=`echo "1 / ${sFreq}" | bc`
-T_ADD_AFTER_AVG=`echo "${dtSamp} * ${NFFTBins} * ${avgsPerTStamp}" | bc`
+dtSamp=`echo "1 / ${sFreq}" | bc -l`
+T_ADD_AFTER_AVG=`echo "${dtSamp} * ${NFFTBins} * ${avgsPerTStamp}" | bc -l`
 T_ADD_AFTER_AVG=${T_ADD_AFTER_AVG:0:10} #Trim from a million digits to 10 total
 
 for k in $(seq 0 4); do 
@@ -54,15 +54,15 @@ pdfFile="${outfile%%.dat}-${NAvg}avg_${NFFTBins}FFT_skip${NAVGSKIP}avgs.pdf"
 filesize=$(ls -la ${file} | cut -f 5 --delimiter=" ")
 sampPerByte=2
 nSamp=$((filesize/sampPerByte))
-nSec=$(bc <<< ${nSamp}/${sFreq})
-nMin=$(bc <<< ${nSamp}/${sFreq}/60)
-nHour=$(bc <<< ${nSamp}/${sFreq}/3600)
+nSec=$(bc -l <<< ${nSamp}/${sFreq})
+nMin=$(bc -l <<< ${nSamp}/${sFreq}/60)
+nHour=$(bc -l <<< ${nSamp}/${sFreq}/3600)
 nSec=${nSec:0:12}
 nMin=${nMin:0:10}
 nHour=${nHour:0:6}
 printf "Filename : %s\n" $(basename ${file})
 printf "Dir      : %s\n" $(dirname  ${file})
-printf "Filesize : %d (%.03f MB, %.03f GB)\n" ${filesize} $(bc <<< ${filesize}/1024/1024) $(bc <<< ${filesize}/1024/1024/1024)
+printf "Filesize : %d (%.03f MB, %.03f GB)\n" ${filesize} $(bc -l <<< ${filesize}/1024/1024) $(bc -l <<< ${filesize}/1024/1024/1024)
 printf "nSamp    : %d\n" ${nSamp}
 printf "sFreq    : %d\n" ${sFreq}
 printf "nSec     : %.03f\n" ${nSec}

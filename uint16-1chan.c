@@ -57,6 +57,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
 	setenv("TZ", "UTC0", 1); //Set timezone to UTC
 	printf("startString: %s\n",o.tStartString);
+	printf("o.time_avg : %.04f\n",o.time_avg);
 
 	/* One to keep track of changing time, one to keep start time  */
 	memset(&tm_initial, 0, sizeof(struct tm));
@@ -357,6 +358,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 	 * when timestamps increase inconsistently.
 	 */
 	if ((o.time_nfft > 0) && (ffts % o.time_fftmod == 0)) {
+	    printf("modding FFT time!\n");
 	    time += o.time_nfft;
 	    seconds += o.time_nfft;
 	}

@@ -202,6 +202,16 @@ options.newheader = coreFFT.COREH_NONE
 
 retstr = coreFFT.core_return()
 
+print "options.window             : {:s}".format(options.window)
+print ""
+print "options.frequency          : {:<6.0f} kHz".format(options.frequency / 1000)
+print "options.tStartString       : {:s}".format(options.tStartString)
+print "options.time_stop          : {:6.4f}".format(options.time_stop)
+print "options.time_avg           : {:6.4f}".format(options.time_avg)
+print "options.time_nfft          : {:6.4f}".format(options.time_nfft)
+print "options.time_units         : {:s}".format(options.time_units)
+# sys.exit()
+
 if o.nchan == 1:
     if o.complex:
         print "Complex, 1-Channel"
@@ -216,11 +226,11 @@ if o.nchan == 1:
         print "float8, 1-Channel"
         ret = coreFFT.float8_1chan(options, retstr)
     else:
-        print "Real, 1-Channel"
+        print "Real (uint16), 1-Channel"
         ret = coreFFT.uint16_1chan(options, retstr)
 else:
     if (not o.complex) and (not o.uint8):
-        print "Real, N-Channel"
+        print "Real (uint16), N-Channel"
         ret = coreFFT.real_nchan(options, retstr)
     else:
         print "Error: multichannel not implemented."
