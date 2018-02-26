@@ -39,6 +39,8 @@ minFreq=0
 datNum=${1:=0}
 CHNUM=${2:=0}
 
+NOPROMPTFORCONVERTTOPDF=1
+
 DATE=(20160629-004501 20160811-000002 20160820-001005 20160822-012002 20160925-004002)
 # printf -v prefStr "%02d-CH0%1d-" $datNum $CHNUM
 dateStr="${DATE[datNum]:0:4}-${DATE[datNum]:4:2}-${DATE[datNum]:6:2}"
@@ -82,8 +84,8 @@ plotDir=/usr/src/Core-FFT/plots
 	       --time-avg=${T_ADD_AFTER_AVG} \
 	       --time-start-string=${tStartString} \
 	        ${file} ${saveDir}/${outer} && \
-    echo "Doing sed to whitelevel 150 ..." && \
-    sed -i 's/data_white_level  0/data_white_level  150/' ${saveDir}/${ngdefFile} && \
-    ../convert_core-fft_output_to_ps.sh --input ${saveDir}/${outer} -d ${saveDir}/${ngdefFile} --outdir ${plotDir}
+    echo "Doing sed to whitelevel 145 ..." && \
+    sed -i 's/data_white_level  0/data_white_level  145/' ${saveDir}/${ngdefFile} && \
+    ../convert_core-fft_output_to_ps.sh --input ${saveDir}/${outer} -d ${saveDir}/${ngdefFile} --outdir ${plotDir} --noprompt ${NOPROMPTFORCONVERTTOPDF}
     
     # ps2pdf gray.ps ${plotDir}/${pdfFile}

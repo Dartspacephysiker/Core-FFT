@@ -21,6 +21,10 @@ do
 	    OUTDIR="$2"
 	    shift # past argument
 	    ;;
+	-n|--noprompt)
+	    NOPROMPT="$2"
+	    shift # past argument
+	    ;;
 	# --default)
 	#     DEFAULT=YES
 	#     ;;
@@ -85,7 +89,18 @@ datafile=${INFILE[*]}
 [ -z "${OUTDIR}"      ] && OUTDIR="./"
 
 while true; do
-    read -p "Do it?" yn
+
+    if [ ! -z "$NOPROMPT" ]; then
+    	# echo "\$NOPROMPT is NOT empty"
+	case $NOPROMPT in
+	    [1]*) yn=Y;;
+	    *) 	read -p "Do it?" yn;;
+	esac
+    else
+	# echo "\$NOPROMPT is empty"
+	read -p "Do it?" yn
+    fi
+
     case $yn in
         [Yy]* )    for file in ${INFILE}; do
 		       echo "Processing $file..."
