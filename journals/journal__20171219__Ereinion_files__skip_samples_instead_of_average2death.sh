@@ -36,10 +36,11 @@ minFreq=0
 #2  20160820-001005
 #3  20160822-012002
 #4  20160925-004002
-datNum=2
-CHNUM=1
+datNum=0
+CHNUM=0
 
 DATE=(20160629-004501 20160811-000002 20160820-001005 20160822-012002 20160925-004002)
+# printf -v prefStr "%02d-CH0%1d-" $datNum $CHNUM
 dateStr="${DATE[datNum]:0:4}-${DATE[datNum]:4:2}-${DATE[datNum]:6:2}"
 tStartString="${dateStr}/${DATE[datNum]:9:2}:${DATE[datNum]:11:2}:${DATE[datNum]:13:2}"
 
@@ -52,6 +53,7 @@ NSAMP_SKIP_AFTER_AVG=$(( NAVGSKIP * NFFTBins ))
 sFreq=2000000
 dtSamp=`echo "1 / ${sFreq}" | bc`
 T_ADD_AFTER_AVG=`echo "${dtSamp} * ${NFFTBins} * ${avgsPerTStamp}" | bc`
+T_ADD_AFTER_AVG=${T_ADD_AFTER_AVG:0:10} #Trim from a million digits to 10 total
 
 if [ "${DATE[datNum]}" = "20160811-000002" ]; then
     dir=/SPENCEdata/Research/database/ground-based/Cluster-SPS/2016/southpole5/Ereinion/DataTrans0117

@@ -262,7 +262,7 @@ int uint16_1chan(struct core_param o, struct core_return *retstr) {
 
 	    if (o.verbose) printf("%f\n",time);
 
-	    if(haveTimeStr == 1){
+	    if(haveTimeStr > 0){
 
 		/* Need to update seconds? */
 		/* printf("time: %.5f, %8.5f\n",time,time*1000); */
